@@ -1,38 +1,46 @@
 import obdio
-import socketio
-import uvicorn
-from datetime import datetime
-from src import Configuration, API
-
-sio = socketio.AsyncServer(cors_allowed_origins='*',
-                           json=obdio, async_mode='asgi')
-config = Configuration()
-
-static_files = {
-    '/view/obd.log': {'filename': 'obd.log', 'content_type': 'text/plain'},
-    '/download/obd.log': 'obd.log',
-    '/view/oap.log': {'filename': 'oap.log', 'content_type': 'text/plain'},
-    '/download/oap.log': 'oap.log'
-}
+import obd
+import argparse
+import asyncio
 
 
-def on_startup():
-    print("========== OnBoardPi OBD Server Startup - {} ===========".format(
-        datetime.now().strftime("%m/%d/%Y, %H:%M:%S")))
-    API(sio).mount()
+def start_obd_socket_io_server(obd_port: str = None) -> None:
+    io = obdio.OBDio()
+    io.connect_obd(obd_port)
+    sio = io.create_server(json=obdio)
+
+    @sio.event
+    async def watch(sid, commands):
+        """OBDio watch."""
+        data = {}
+        io.connection.stop()
+        for cmd in commands:
+            io.connection.watch(obd.commands[cmd])
+        io.connection.start()
+        
+        while True:
+            for cmd in commands:
+                response = io.connection.query(obd.commands[cmd])
+                data[cmd] = response
+            await sio.emit("watch", data, room=sid)
+            await asyncio.sleep(1)
+
+    io.run_server()
 
 
-def on_shutdown():
-    config.obd_io.close()
-    print("========== OnBoardPi OBD Server Shutdown - {} ===========".format(
-        datetime.now().strftime("%m/%d/%Y, %H:%M:%S")))
+def get_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-p", "--port", type=str, default=None, help="OBD port")
+    args = parser.parse_args()
+    return args
 
 
-def main():
-    app = socketio.ASGIApp(sio, static_files=static_files,
-                           on_startup=on_startup, on_shutdown=on_shutdown)
-    uvicorn.run(app, host='0.0.0.0', port=3001)
+def main() -> None:
+    args = get_args()
+    obd_port = args.port
+
+    start_obd_socket_io_server(obd_port=obd_port)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

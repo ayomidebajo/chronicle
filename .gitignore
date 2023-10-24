@@ -1,8 +1,13 @@
-elm.log*
-obd.log*
-oap.log*
-*.log
+# VS Code
+.vscode/
 
-settings.json
-.vscode
-.img
+# Python Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python Virtual Environment
+.venv/
+
+# Custom ELM log
+elm.log
