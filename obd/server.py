@@ -2,7 +2,6 @@ import obdio
 import obd
 import argparse
 import asyncio
-import time
 
 
 def start_obd_socket_io_server(obd_port: str = None) -> None:
@@ -14,22 +13,17 @@ def start_obd_socket_io_server(obd_port: str = None) -> None:
     async def watch(sid, commands):
         """OBDio watch."""
         data = {}
+        io.connection.stop()
         for cmd in commands:
-            io.connection.watch(getattr(obd.commands, cmd))
+            io.connection.watch(obd.commands[cmd])
+        io.connection.start()
         
         while True:
             for cmd in commands:
-                response = io.connection.query(getattr(obd.commands, cmd))
+                response = io.connection.query(obd.commands[cmd])
                 data[cmd] = response
             await sio.emit("watch", data, room=sid)
             await asyncio.sleep(1)
-
-    #@sio.event
-    #async def watch_callback(response):
-        #"""OBDio callback."""
-        #await sio.emit("watch", response)
-
-    #io.connection.watch_callback = watch_callback
 
     io.run_server()
 
