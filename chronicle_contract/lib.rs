@@ -1,142 +1,70 @@
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 
 #[ink::contract]
-mod chronicle_contract {
+pub mod chronicle_contracts {
+    use ink::{prelude::vec::Vec, storage::{Mapping, traits::ManualKey}};
+    use scale::{Decode, Encode};
 
-    /// Defines the storage of your contract.
-    /// Add new fields to the below struct in order
-    /// to add new static storage fields to your contract.
     #[ink(storage)]
-    pub struct ChronicleContract {
-        /// Stores a single `bool` value on the storage.
-        value: bool,
+    pub struct ChronicleContracts {
+        cars: Mapping<AccountId, CarData>,
+        owners: Vec<AccountId>,
     }
 
-    impl ChronicleContract {
-        /// Constructor that initializes the `bool` value to the given `init_value`.
+    #[derive(Encode, Decode, Debug, PartialEq, Clone)]
+    #[cfg_attr(
+        feature = "std",
+        derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout)
+    )]
+    pub struct CarData {
+        model: String,
+        vin: String,
+        log: Vec<(String, String)>,
+        car_identity: AccountId,
+    }
+
+    impl ChronicleContracts {
         #[ink(constructor)]
-        pub fn new(init_value: bool) -> Self {
-            Self { value: init_value }
+        pub fn new() -> Self {
+            let cars = Mapping::default();
+            let owners: Vec<AccountId> = Vec::new();
+            Self { cars, owners }
         }
 
-        /// Constructor that initializes the `bool` value to `false`.
-        ///
-        /// Constructors can delegate to other constructors.
-        #[ink(constructor)]
-        pub fn default() -> Self {
-            Self::new(Default::default())
-        }
-
-        /// A message that can be called on instantiated contracts.
-        /// This one flips the value of the stored `bool` from `true`
-        /// to `false` and vice versa.
         #[ink(message)]
-        pub fn flip(&mut self) {
-            self.value = !self.value;
+        pub fn get_owners(&self) -> Vec<AccountId> {
+            self.owners.clone()
         }
 
-        /// Simply returns the current value of our `bool`.
         #[ink(message)]
-        pub fn get(&self) -> bool {
-            self.value
-        }
-    }
-
-    /// Unit tests in Rust are normally defined within such a `#[cfg(test)]`
-    /// module and test functions are marked with a `#[test]` attribute.
-    /// The below code is technically just normal Rust code.
-    #[cfg(test)]
-    mod tests {
-        /// Imports all the definitions from the outer scope so we can use them here.
-        use super::*;
-
-        /// We test if the default constructor does its job.
-        #[ink::test]
-        fn default_works() {
-            let chronicle_contract = ChronicleContract::default();
-            assert_eq!(chronicle_contract.get(), false);
+        pub fn get_single_car(&self, id: AccountId) -> Option<CarData> {
+            self.cars.get(id)
         }
 
-        /// We test a simple use case of our contract.
-        #[ink::test]
-        fn it_works() {
-            let mut chronicle_contract = ChronicleContract::new(false);
-            assert_eq!(chronicle_contract.get(), false);
-            chronicle_contract.flip();
-            assert_eq!(chronicle_contract.get(), true);
-        }
-    }
+        #[ink(message)]
+        pub fn add_car(&mut self, model: String, vin: String, log: Vec<(String, String)>, owner: AccountId) {
+            // ensure contract caller is the owner
+            assert_eq!(self.env().caller(), owner);
 
+            // ensure car is not already registered
+            assert!(!self.cars.contains(&owner));
 
-    /// This is how you'd write end-to-end (E2E) or integration tests for ink! contracts.
-    ///
-    /// When running these you need to make sure that you:
-    /// - Compile the tests with the `e2e-tests` feature flag enabled (`--features e2e-tests`)
-    /// - Are running a Substrate node which contains `pallet-contracts` in the background
-    #[cfg(all(test, feature = "e2e-tests"))]
-    mod e2e_tests {
-        /// Imports all the definitions from the outer scope so we can use them here.
-        use super::*;
+            // convert vin number to bytes
+            let bytes = vin.as_bytes();
 
-        /// A helper function used for calling contract messages.
-        use ink_e2e::build_message;
-
-        /// The End-to-End test `Result` type.
-        type E2EResult<T> = std::result::Result<T, Box<dyn std::error::Error>>;
-
-        /// We test that we can upload and instantiate the contract using its default constructor.
-        #[ink_e2e::test]
-        async fn default_works(mut client: ink_e2e::Client<C, E>) -> E2EResult<()> {
-            // Given
-            let constructor = ChronicleContractRef::default();
-
-            // When
-            let contract_account_id = client
-                .instantiate("chronicle_contract", &ink_e2e::alice(), constructor, 0, None)
-                .await
-                .expect("instantiate failed")
-                .account_id;
-
-            // Then
-            let get = build_message::<ChronicleContractRef>(contract_account_id.clone())
-                .call(|chronicle_contract| chronicle_contract.get());
-            let get_result = client.call_dry_run(&ink_e2e::alice(), &get, 0, None).await;
-            assert!(matches!(get_result.return_value(), false));
-
-            Ok(())
+            // create identity on vin number
+            let car_identity = AccountId::try_from(bytes).expect("error creating account id");
+            
+            let car = CarData {
+                model,
+                vin,
+                log,
+                car_identity,
+            };
+            self.cars.insert(owner, &car);
+            self.owners.push(owner);
         }
 
-        /// We test that we can read and write a value from the on-chain contract contract.
-        #[ink_e2e::test]
-        async fn it_works(mut client: ink_e2e::Client<C, E>) -> E2EResult<()> {
-            // Given
-            let constructor = ChronicleContractRef::new(false);
-            let contract_account_id = client
-                .instantiate("chronicle_contract", &ink_e2e::bob(), constructor, 0, None)
-                .await
-                .expect("instantiate failed")
-                .account_id;
 
-            let get = build_message::<ChronicleContractRef>(contract_account_id.clone())
-                .call(|chronicle_contract| chronicle_contract.get());
-            let get_result = client.call_dry_run(&ink_e2e::bob(), &get, 0, None).await;
-            assert!(matches!(get_result.return_value(), false));
-
-            // When
-            let flip = build_message::<ChronicleContractRef>(contract_account_id.clone())
-                .call(|chronicle_contract| chronicle_contract.flip());
-            let _flip_result = client
-                .call(&ink_e2e::bob(), flip, 0, None)
-                .await
-                .expect("flip failed");
-
-            // Then
-            let get = build_message::<ChronicleContractRef>(contract_account_id.clone())
-                .call(|chronicle_contract| chronicle_contract.get());
-            let get_result = client.call_dry_run(&ink_e2e::bob(), &get, 0, None).await;
-            assert!(matches!(get_result.return_value(), true));
-
-            Ok(())
-        }
     }
 }
