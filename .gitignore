@@ -11,3 +11,4 @@ __pycache__/
 
 # Custom ELM log
 elm.log
+node_modules/
