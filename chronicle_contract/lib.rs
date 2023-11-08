@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 
-#[ink::contract]
+#[ink::contract(env = xvm_environment::XvmEnvironment)]
 pub mod chronicle_contracts {
     use ink::{prelude::vec::Vec, storage::{Mapping, traits::ManualKey}};
     use scale::{Decode, Encode};
