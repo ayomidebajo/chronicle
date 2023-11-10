@@ -14,6 +14,18 @@ def start_obd_http_server(obd_port: str = None, commands=COMMANDS_TO_WATCH) -> N
     connection.start()
 
     class OBDHTTPRequestHandler(BaseHTTPRequestHandler):
+
+        def end_headers(self):
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Access-Control-Allow-Methods', '*')
+            self.send_header('Access-Control-Allow-Headers', '*')
+            self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
+            return super().end_headers()
+
+        def do_OPTIONS(self):
+            self.send_response(200)
+            self.end_headers()
+
         def do_GET(self):
             data = {}
             self.send_response(200)
