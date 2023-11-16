@@ -12,3 +12,9 @@ __pycache__/
 # Custom ELM log
 elm.log
 node_modules/
+
+# Ignore all target directories
+**/target/
+
+# Ignore backup files creates by cargo fmt.
+**/*.rs.bk
