@@ -1,13 +1,13 @@
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 
 #[ink::contract]
-pub mod chronicle_contracts {
+pub mod chronicle {
     use ink::{prelude::string::String, prelude::vec::Vec, storage::Mapping};
     // use ink::prelude::string::String;
     use scale::{Decode, Encode};
 
     #[ink(storage)]
-    pub struct ChronicleContracts {
+    pub struct Chronicle {
         cars: Mapping<String, CarData>,
         owners: Vec<AccountId>,
     }
@@ -67,7 +67,7 @@ pub mod chronicle_contracts {
         }
     }
 
-    impl ChronicleContracts {
+    impl Chronicle {
         #[ink(constructor)]
         pub fn new() -> Self {
             let cars = Mapping::default();
@@ -98,6 +98,7 @@ pub mod chronicle_contracts {
                 vin: vin.clone(),
                 log: logs,
                 car_identity: vin.clone(),
+                owner
             };
             self.cars.insert(vin, &car);
             self.owners.push(owner);
