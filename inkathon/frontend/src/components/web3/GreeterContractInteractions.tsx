@@ -109,17 +109,17 @@ export const GreeterContractInteractions: FC = () => {
 
   const [owners, setOwners] = useState<string[]>()
 
-  const fetchedObd = async () => {
-    const response = await fetch('http://127.0.0.1:8000')
+  // const fetchedObd = async () => {
+  //   const response = await fetch('http://127.0.0.1:8000')
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`)
-    }
+  //   if (!response.ok) {
+  //     throw new Error(`HTTP error! Status: ${response.status}`)
+  //   }
 
-    const jsonData = await response.json()
+  //   const jsonData = await response.json()
 
-    setFetchedObdData(jsonData)
-  }
+  //   setFetchedObdData(jsonData)
+  // }
 
   // Fetch Greeting
   const fetchGreeting = async () => {
@@ -148,10 +148,10 @@ export const GreeterContractInteractions: FC = () => {
 
   useEffect(() => {
     fetchGreeting()
-    fetchedObd()
+    // fetchedObd()
   }, [contract])
   console.log(owners, 'chronicle data hrere')
-  console.log(fetchedObdData, 'server obd!!!')
+  // console.log(fetchedObdData, 'server obd!!!')
 
   // Update Greeting
   const updateGreeting = async ({ newMessage }: UpdateGreetingValues) => {
