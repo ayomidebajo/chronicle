@@ -36,20 +36,90 @@ interface Log {
   timestamp: number
 }
 
+enum CommandWatched {
+  ENGINE_LOAD = 'ENGINE_LOAD',
+  THROTTLE_POS = 'THROTTLE_POS',
+  DISTANCE_W_MIL = 'DISTANCE_W_MIL',
+}
+
+interface CommandObj {
+  name: string
+  desc: string
+  fast: boolean
+  command: string
+  bytes: string
+  ecu: number
+}
+
+interface CommandResponse {
+  ENGINE_LOAD: {
+    value: string
+    command: {
+      name: string
+      desc: string
+      fast: boolean
+      command: string
+      bytes: string
+      ecu: number
+    }
+    time: number
+    unit: string
+  }
+  THROTTLE_POS: {
+    value: string
+    command: {
+      name: string
+      desc: string
+      fast: boolean
+      command: string
+      bytes: string
+      ecu: number
+    }
+    time: number
+    unit: string
+  }
+  DISTANCE_W_MIL: {
+    value: string
+    command: {
+      name: string
+      desc: string
+      fast: boolean
+      command: string
+      bytes: string
+      ecu: number
+    }
+    time: number
+    unit: string
+  }
+}
+
 export const GreeterContractInteractions: FC = () => {
   const { api, activeAccount, activeSigner } = useInkathon()
   // const { contract, address: contractAddress } = useRegisteredContract(ContractIds.Greeter)
-    const { contract, address: contractAddress } = useRegisteredContract(ContractIds.Chronicle)
+  const { contract, address: contractAddress } = useRegisteredContract(ContractIds.Chronicle)
   const [greeterMessage, setGreeterMessage] = useState<string>()
-  const [chronicleData, setChronicleData] = useState<UpdateChronicleValues>({} as UpdateChronicleValues)
+  const [chronicleData, setChronicleData] = useState<UpdateChronicleValues>(
+    {} as UpdateChronicleValues,
+  )
   const [fetchIsLoading, setFetchIsLoading] = useState<boolean>()
   const [updateIsLoading, setUpdateIsLoading] = useState<boolean>()
+  const [fetchedObdData, setFetchedObdData] = useState<CommandResponse>()
   // const { register, reset, handleSubmit } = useForm<UpdateGreetingValues>()
-  const {register, reset, handleSubmit} = useForm<CarData>()
-
+  const { register, reset, handleSubmit } = useForm<CarData>()
 
   const [owners, setOwners] = useState<string[]>()
 
+  const fetchedObd = async () => {
+    const response = await fetch('http://127.0.0.1:8000')
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`)
+    }
+
+    const jsonData = await response.json()
+
+    setFetchedObdData(jsonData)
+  }
 
   // Fetch Greeting
   const fetchGreeting = async () => {
@@ -63,10 +133,10 @@ export const GreeterContractInteractions: FC = () => {
       const { output, isError, decodedOutput } = decodeOutput(result2, contract, 'getSingleCar')
       if (isError) throw new Error(decodedOutput)
       // setGreeterMessage(output)
-    setOwners(output)
-    // console.log("yo");
-    
-    // console.log(owners, "chronicle data")
+      setOwners(output)
+      // console.log("yo");
+
+      // console.log(owners, "chronicle data")
     } catch (e) {
       console.error(e)
       toast.error('Error while fetching greeting. Try again…')
@@ -75,10 +145,13 @@ export const GreeterContractInteractions: FC = () => {
       setFetchIsLoading(false)
     }
   }
+
   useEffect(() => {
     fetchGreeting()
+    fetchedObd()
   }, [contract])
-  console.log(owners, "chronicle data hrere")
+  console.log(owners, 'chronicle data hrere')
+  console.log(fetchedObdData, 'server obd!!!')
 
   // Update Greeting
   const updateGreeting = async ({ newMessage }: UpdateGreetingValues) => {

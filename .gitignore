@@ -20,3 +20,7 @@ node_modules/
 **/.DS_Store
 # Ignore backup files creates by cargo fmt.
 **/*.rs.bk
+
+**/.txt
+
+**/.log

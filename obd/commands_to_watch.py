@@ -1,8 +1,5 @@
 COMMANDS_TO_WATCH = [
-    "RPM",
-    "SPEED",
-    "COOLANT_TEMP",
+    "ENGINE_LOAD",
     "THROTTLE_POS",
-    "INTAKE_TEMP",
-    "FUEL_STATUS"
+    "DISTANCE_W_MIL"
 ]
