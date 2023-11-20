@@ -15,7 +15,7 @@ You can use either of them as your lordship pleases.
 
 #### Run with ELM-327 Emulator
 - Run `elm`. Take note of the port the emulator is running on (e.g. `/dev/pts/2`).
-- In a different terminal, run `python3 http_server.py -p {port}` where `port` is the port your emulator is running on (e.g. `python3 http_server.py -p dev/pts/2`). Make sure your virtual environment is active in both terminals.
+- In a different terminal, run `python3 http_server.py -p {port}` where `port` is the port your emulator is running on (e.g. `python3 http_server.py -p /dev/pts/2`). Make sure your virtual environment is active in both terminals.
 
 ### 2. Request for OBD data
 - Send a GET request to the server.
