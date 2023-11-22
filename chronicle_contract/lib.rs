@@ -86,7 +86,7 @@ pub mod chronicle {
         }
 
         #[ink(message)]
-        pub fn add_car(&mut self, model: String, vin: String, logs: Vec<Log>, owner: AccountId) {
+        pub fn add_car(&mut self, model: String, vin: String, logs: Vec<Log>, owner: AccountId) -> Result<CarData> {
             // ensure contract caller is the owner
             assert_eq!(self.env().caller(), owner);
 
@@ -102,6 +102,16 @@ pub mod chronicle {
             };
             self.cars.insert(vin, &car);
             self.owners.push(owner);
+
+            Ok(car)
+        }
+        #[ink(message)]
+        pub fn update_car_logs(&mut self, vin: String, logs: Vec<Log>) -> Result<CarData> {
+            // ensure contract caller is the owner
+            let car = self.cars.get_mut(&vin).ok_or(Error::CarNotFound)?;
+            car.log.extend(logs);
+            
+            Ok(car.clone())
         }
     }
 }
